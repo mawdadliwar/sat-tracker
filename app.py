@@ -19,7 +19,7 @@ R_EARTH_KM = 6371.0
 @st.cache_data(show_spinner=False)
 def fetch_tle(norad_id):
     url = f"https://celestrak.org/NORAD/elements/gp.php?CATNR={norad_id}&FORMAT=TLE"
-    r = requests.get(url, timeout=15)
+    r = requests.get(url, timeout=5)
     r.raise_for_status()
     return r.text
 
@@ -75,7 +75,11 @@ try:
     if source == "tle.txt file":
         text = TLE_FILE.read_text(encoding="utf-8")
     elif source == "CelesTrak (latest)":
-        text = fetch_tle(int(norad))
+        try:
+            text = fetch_tle(int(norad))
+        except Exception:
+            text = TLE_FILE.with_name("tle_latest.txt").read_text(encoding="utf-8")
+            st.warning("CelesTrak is not reachable from this server - using the saved tle_latest.txt instead.")
     else:
         text = pasted
     line1, line2 = parse_tle(text, int(norad))
